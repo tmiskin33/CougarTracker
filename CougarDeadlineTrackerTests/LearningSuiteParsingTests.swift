@@ -72,14 +72,14 @@ final class LearningSuiteParsingTests: XCTestCase {
         let html = """
         <table>
           <tr><th>Assignment</th><th>Due</th><th>Status</th></tr>
-          <tr><td><a href="/a/1">A</a></td><td>Sep 9, 2026 11:59 PM</td><td>Not submitted</td></tr>
-          <tr><td><a href="/a/2">B</a></td><td>Sep 10, 2026 11:59 PM</td><td>Unsubmitted</td></tr>
-          <tr><td><a href="/a/3">C</a></td><td>Sep 11, 2026 11:59 PM</td><td>Missing</td></tr>
-          <tr><td><a href="/a/4">D</a></td><td>Sep 12, 2026 11:59 PM</td><td>Submitted</td></tr>
+          <tr><td><a href="/a/1">Reading Response</a></td><td>Sep 9, 2026 11:59 PM</td><td>Not submitted</td></tr>
+          <tr><td><a href="/a/2">Lab Report</a></td><td>Sep 10, 2026 11:59 PM</td><td>Unsubmitted</td></tr>
+          <tr><td><a href="/a/3">Essay Draft</a></td><td>Sep 11, 2026 11:59 PM</td><td>Missing</td></tr>
+          <tr><td><a href="/a/4">Final Paper</a></td><td>Sep 12, 2026 11:59 PM</td><td>Submitted</td></tr>
         </table>
         """
         let items = try parser.parse(html: html, context: context())
-        XCTAssertEqual(items.map(\.title), ["A", "B", "C", "D"])
+        XCTAssertEqual(items.map(\.title), ["Reading Response", "Lab Report", "Essay Draft", "Final Paper"])
         XCTAssertEqual(items.map(\.isCompleted), [false, false, false, true])
     }
 
