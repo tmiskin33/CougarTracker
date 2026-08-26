@@ -1,0 +1,16 @@
+[
+  {
+    "id": 21001,
+    "name": "Calculus 2",
+    "course_code": "MATH 113"
+  },
+  {
+    "id": 21002,
+    "name": "Data Structures",
+    "course_code": "C S 235"
+  },
+  {
+    "id": 21999,
+    "access_restricted_by_date": true
+  }
+]

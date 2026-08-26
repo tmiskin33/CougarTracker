@@ -1,0 +1,59 @@
+[
+  {
+    "type": "submitting",
+    "context_name": "MATH 113: Calculus 2",
+    "course_id": 21001,
+    "html_url": "https://byu.instructure.com/courses/21001/assignments/990101#submit",
+    "assignment": {
+      "id": 990101,
+      "name": "Section 7.4 Homework",
+      "due_at": "2026-09-08T05:59:00Z",
+      "html_url": "https://byu.instructure.com/courses/21001/assignments/990101",
+      "course_id": 21001,
+      "description": "<p>Complete problems <strong>1&ndash;25</strong> odd.</p>",
+      "submission_types": ["online_upload"],
+      "submission": {
+        "submitted_at": null,
+        "workflow_state": "unsubmitted"
+      }
+    }
+  },
+  {
+    "type": "submitting",
+    "context_name": "C S 235: Data Structures",
+    "course_id": 21002,
+    "assignment": {
+      "id": 990202,
+      "name": "Midterm Exam 1",
+      "due_at": "2026-09-11T23:00:00Z",
+      "html_url": "https://byu.instructure.com/courses/21002/assignments/990202",
+      "course_id": 21002,
+      "submission_types": ["online_quiz"],
+      "quiz_id": 4477,
+      "submission": {
+        "submitted_at": null,
+        "workflow_state": "unsubmitted"
+      }
+    }
+  },
+  {
+    "type": "grading",
+    "context_name": "C S 235: Data Structures",
+    "assignment": {
+      "id": 990303,
+      "name": "Grading queue item",
+      "due_at": "2026-09-12T23:00:00Z",
+      "course_id": 21002
+    }
+  },
+  {
+    "type": "submitting",
+    "context_name": "REL A 275: Doctrine and Covenants",
+    "assignment": {
+      "id": 990404,
+      "name": "Reading Journal (no due date)",
+      "due_at": null,
+      "course_id": 21003
+    }
+  }
+]

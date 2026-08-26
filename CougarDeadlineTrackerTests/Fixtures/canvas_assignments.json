@@ -1,0 +1,40 @@
+[
+  {
+    "id": 990101,
+    "name": "Section 7.4 Homework",
+    "due_at": "2026-09-08T05:59:00Z",
+    "html_url": "https://byu.instructure.com/courses/21001/assignments/990101",
+    "course_id": 21001,
+    "description": "<p>Complete problems 1&ndash;25 odd.</p>",
+    "submission_types": ["online_upload"],
+    "submission": {
+      "submitted_at": null,
+      "workflow_state": "unsubmitted"
+    }
+  },
+  {
+    "id": 990105,
+    "name": "Section 7.3 Homework",
+    "due_at": "2026-09-01T05:59:00.500Z",
+    "html_url": "https://byu.instructure.com/courses/21001/assignments/990105",
+    "course_id": 21001,
+    "submission_types": ["online_upload"],
+    "submission": {
+      "submitted_at": "2026-08-31T22:14:03Z",
+      "workflow_state": "submitted"
+    }
+  },
+  {
+    "id": 990106,
+    "name": "Group Discussion: Series Convergence",
+    "due_at": "2026-09-15T05:59:00Z",
+    "course_id": 21001,
+    "submission_types": ["discussion_topic"]
+  },
+  {
+    "id": 990107,
+    "name": "Practice Set (no due date)",
+    "due_at": null,
+    "course_id": 21001
+  }
+]
