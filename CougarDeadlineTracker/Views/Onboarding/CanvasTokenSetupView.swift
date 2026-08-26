@@ -42,21 +42,25 @@ struct CanvasTokenSetupView: View {
                 }
             }
 
-            Section("Access token") {
+            Section {
                 SecureField("Paste your Canvas token", text: $token)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .submitLabel(.done)
                     .onSubmit { Task { await connect() } }
+            } header: {
+                Text("Access token")
             } footer: {
                 Text("Stored in the iOS keychain, on this device only. Revoke it any time from Canvas › Account › Settings.")
             }
 
-            Section("Canvas site") {
+            Section {
                 TextField("byu.instructure.com", text: $host)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.URL)
+            } header: {
+                Text("Canvas site")
             } footer: {
                 Text("Change this only if your Canvas lives somewhere other than byu.instructure.com.")
             }

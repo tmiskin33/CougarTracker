@@ -17,9 +17,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Toolchain
-        run: |
-          xcodebuild -version
-          swift --version
+        run: xcodebuild -version
 
       - name: Choose a simulator
         id: sim
@@ -40,18 +38,51 @@ jobs:
 
       - name: Build
         run: |
-          set -o pipefail
+          # xcodebuild's raw output is thousands of lines of compiler
+          # invocations. Send it to a file and surface only the diagnostics,
+          # so a failure is readable without downloading the whole log.
+          set +e
           xcodebuild build-for-testing \
             -project CougarDeadlineTracker.xcodeproj \
             -scheme CougarDeadlineTracker \
             -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO > build.log 2>&1
+          STATUS=$?
+          echo "----- diagnostics -----"
+          grep -E '(error|warning): ' build.log \
+            | sed 's|.*/CougarTracker/||' \
+            | sort -u \
+            | head -100
+          echo "----- end diagnostics -----"
+          if [ $STATUS -ne 0 ]; then
+            echo "----- tail of build log -----"
+            tail -30 build.log
+          fi
+          exit $STATUS
 
       - name: Test
         run: |
-          set -o pipefail
+          set +e
           xcodebuild test-without-building \
             -project CougarDeadlineTracker.xcodeproj \
             -scheme CougarDeadlineTracker \
             -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO > test.log 2>&1
+          STATUS=$?
+          echo "----- failures -----"
+          grep -E "(error:|XCTAssert|failed \(|Test Case .* failed)" test.log \
+            | sed 's|.*/CougarTracker/||' \
+            | head -80
+          echo "----- summary -----"
+          grep -E "Test Suite '.*' (passed|failed)|Executed [0-9]+ test" test.log | tail -10
+          exit $STATUS
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-logs
+          path: |
+            build.log
+            test.log
+          if-no-files-found: ignore
