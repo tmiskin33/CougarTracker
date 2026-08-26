@@ -1,0 +1,57 @@
+name: Build and test
+
+# Builds the app and runs the test suite on a macOS runner, so a compile error
+# shows up here rather than the first time someone opens Xcode.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Choose a simulator
+        id: sim
+        run: |
+          # Runner images change which devices they ship, so pick whatever
+          # iPhone is actually installed rather than pinning a model.
+          DEVICE=$(xcrun simctl list devices available \
+            | grep -Eo 'iPhone [^(]*' \
+            | head -1 \
+            | sed 's/[[:space:]]*$//')
+          if [ -z "$DEVICE" ]; then
+            echo "No iPhone simulator available on this runner:"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "Using simulator: $DEVICE"
+          echo "device=$DEVICE" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project CougarDeadlineTracker.xcodeproj \
+            -scheme CougarDeadlineTracker \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Test
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project CougarDeadlineTracker.xcodeproj \
+            -scheme CougarDeadlineTracker \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
+            CODE_SIGNING_ALLOWED=NO
