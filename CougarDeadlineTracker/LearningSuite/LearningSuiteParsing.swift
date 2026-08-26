@@ -25,6 +25,10 @@ struct LearningSuiteSelectorConfig: Codable, Equatable {
     var courseColumnLabels: [String]
     var statusColumnLabels: [String]
     var completedStatusWords: [String]
+    /// Checked before `completedStatusWords`, because the words that mean
+    /// "done" appear inside the phrases that mean "not done" — "Not submitted"
+    /// contains "submitted".
+    var notCompletedStatusWords: [String]
     var itemClassHints: [String]
     var courseClassHints: [String]
     var loginPageMarkers: [String]
@@ -36,6 +40,10 @@ struct LearningSuiteSelectorConfig: Codable, Equatable {
         courseColumnLabels: ["course", "class", "section", "subject"],
         statusColumnLabels: ["status", "submitted", "state", "completed"],
         completedStatusWords: ["submitted", "complete", "completed", "turned in", "done", "graded"],
+        notCompletedStatusWords: [
+            "not submitted", "unsubmitted", "not turned in", "no submission",
+            "incomplete", "not complete", "not started", "missing", "past due", "late"
+        ],
         itemClassHints: ["assignment", "due", "task", "deadline", "event", "item", "row", "card", "todo"],
         courseClassHints: ["course", "class", "section"],
         loginPageMarkers: ["cas.byu.edu", "byu net id", "netid", "duo security", "two-factor", "sign in to byu"],
@@ -206,8 +214,17 @@ struct LearningSuiteHeuristicParser: LearningSuiteParsing {
         )
     }
 
+    /// Whether a status cell means the work is done.
+    ///
+    /// Negations are checked first and win outright: every word that means
+    /// "done" is a substring of some phrase that means the opposite, so
+    /// "Not submitted" would otherwise read as submitted and tick off work the
+    /// student still owes.
     private func isCompletedStatus(_ text: String) -> Bool {
         let lowered = text.lowercased()
+        if config.notCompletedStatusWords.contains(where: { lowered.contains($0) }) {
+            return false
+        }
         return config.completedStatusWords.contains { lowered.contains($0) }
     }
 

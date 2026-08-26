@@ -1,11 +1,80 @@
 {
-  "dueColumnLabels": ["due", "due date", "due on", "date due", "deadline", "date"],
-  "titleColumnLabels": ["assignment", "title", "name", "task", "item", "description", "activity"],
-  "courseColumnLabels": ["course", "class", "section", "subject"],
-  "statusColumnLabels": ["status", "submitted", "state", "completed"],
-  "completedStatusWords": ["submitted", "complete", "completed", "turned in", "done", "graded"],
-  "itemClassHints": ["assignment", "due", "task", "deadline", "event", "item", "row", "card", "todo"],
-  "courseClassHints": ["course", "class", "section"],
-  "loginPageMarkers": ["cas.byu.edu", "byu net id", "netid", "duo security", "two-factor", "sign in to byu"],
-  "ignoredRowWords": ["no assignments", "nothing due", "no items"]
+  "dueColumnLabels": [
+    "due",
+    "due date",
+    "due on",
+    "date due",
+    "deadline",
+    "date"
+  ],
+  "titleColumnLabels": [
+    "assignment",
+    "title",
+    "name",
+    "task",
+    "item",
+    "description",
+    "activity"
+  ],
+  "courseColumnLabels": [
+    "course",
+    "class",
+    "section",
+    "subject"
+  ],
+  "statusColumnLabels": [
+    "status",
+    "submitted",
+    "state",
+    "completed"
+  ],
+  "completedStatusWords": [
+    "submitted",
+    "complete",
+    "completed",
+    "turned in",
+    "done",
+    "graded"
+  ],
+  "notCompletedStatusWords": [
+    "not submitted",
+    "unsubmitted",
+    "not turned in",
+    "no submission",
+    "incomplete",
+    "not complete",
+    "not started",
+    "missing",
+    "past due",
+    "late"
+  ],
+  "itemClassHints": [
+    "assignment",
+    "due",
+    "task",
+    "deadline",
+    "event",
+    "item",
+    "row",
+    "card",
+    "todo"
+  ],
+  "courseClassHints": [
+    "course",
+    "class",
+    "section"
+  ],
+  "loginPageMarkers": [
+    "cas.byu.edu",
+    "byu net id",
+    "netid",
+    "duo security",
+    "two-factor",
+    "sign in to byu"
+  ],
+  "ignoredRowWords": [
+    "no assignments",
+    "nothing due",
+    "no items"
+  ]
 }

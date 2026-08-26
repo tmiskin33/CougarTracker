@@ -70,9 +70,13 @@ jobs:
             CODE_SIGNING_ALLOWED=NO > test.log 2>&1
           STATUS=$?
           echo "----- failures -----"
-          grep -E "(error:|XCTAssert|failed \(|Test Case .* failed)" test.log \
+          # CoreData logs thousands of "CoreData: error:" lines from the
+          # in-memory store used by the merge tests. They are noise, and they
+          # will bury the one line naming the test that actually failed.
+          grep -E "(: error:|XCTAssert|Test Case .* failed)" test.log \
+            | grep -v CoreData \
             | sed 's|.*/CougarTracker/||' \
-            | head -80
+            | head -60
           echo "----- summary -----"
           grep -E "Test Suite '.*' (passed|failed)|Executed [0-9]+ test" test.log | tail -10
           exit $STATUS
