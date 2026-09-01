@@ -1,0 +1,12 @@
+{
+  "name": "cougar-deadline-tracker-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser front end for Cougar Deadline Tracker.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  }
+}

@@ -100,5 +100,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+        working-directory: web
       - name: Test
-        run: node --test web/test/*.test.js
+        run: node --test test/*.test.js
+        working-directory: web

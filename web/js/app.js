@@ -20,6 +20,8 @@
     banners: []
   };
 
+  const account = CDT.createAccount();
+
   function adoptIdentity(identity) {
     state.identity = identity;
     storage = CDT.createStorage(null, session.namespaceFor(identity));
@@ -27,6 +29,31 @@
     state.settings = storage.loadSettings();
     state.banners = [];
     state.view = 'list';
+    render();
+  }
+
+  // An account keeps its data on the server, so it is private rather than
+  // merely separate. The local copy is a cache, so the list still works offline.
+  async function adoptAccount(user) {
+    const identity = { kind: 'account', id: user.email, email: user.email, name: user.email };
+    const cache = CDT.createStorage(null, session.namespaceFor(identity));
+    const remote = CDT.createServerStorage(cache);
+
+    state.identity = identity;
+    storage = remote;
+    state.deadlines = remote.loadDeadlines();
+    state.settings = Object.assign({}, store.DEFAULT_SETTINGS, remote.loadSettings());
+    state.banners = [];
+    state.view = 'list';
+    render();
+
+    try {
+      await remote.pull();
+      state.deadlines = remote.loadDeadlines();
+      state.settings = Object.assign({}, store.DEFAULT_SETTINGS, remote.loadSettings());
+    } catch (error) {
+      banner('error', 'Working from the local copy', error.message);
+    }
     render();
   }
 
@@ -523,6 +550,7 @@
   }
 
   $('sign-out').addEventListener('click', function () {
+    const wasAccount = state.identity && state.identity.kind === 'account';
     session.signOut();
     state.identity = null;
     storage = null;
@@ -530,13 +558,116 @@
     state.settings = Object.assign({}, store.DEFAULT_SETTINGS);
     signInError('');
     render();
+    if (wasAccount) account.signOut().catch(function () { /* the cookie expires anyway */ });
+  });
+
+  // Accounts only exist where the API does.
+  $('signin-account').hidden = !isServed;
+  $('signin-note').textContent = isServed
+    ? 'An account keeps your deadlines on the server, so nobody else at this computer can read them. '
+      + 'The Chrome and profile options keep everything in this browser instead: separate per person, but readable '
+      + 'from the developer console by anyone using this machine.'
+    : 'Everything is stored in this browser: separate per person, but readable from the developer console by anyone '
+      + 'using this computer. Open the deployed site to use an account, which keeps your data on the server instead.';
+
+  showVerificationOutcome();
+
+  function showVerificationOutcome() {
+    const outcome = new URLSearchParams(location.search).get('verified');
+    if (!outcome) return;
+    const note = $('verified-note');
+    note.hidden = false;
+    if (outcome === '1') {
+      note.textContent = 'Email confirmed. Sign in below.';
+      note.classList.remove('bad');
+    } else if (outcome === 'expired') {
+      note.textContent = 'That link has already been used or has expired. Sign in, or send a new one.';
+      note.classList.add('bad');
+    } else {
+      note.textContent = 'That verification link was not valid.';
+      note.classList.add('bad');
+    }
+    history.replaceState(null, '', location.pathname);
+  }
+
+  function accountBusy(busy) {
+    ['do-signin', 'do-signup', 'do-resend'].forEach(function (id) {
+      const node = $(id);
+      if (node) node.disabled = busy;
+    });
+  }
+
+  function credentials() {
+    return { email: $('account-email').value.trim(), password: $('account-password').value };
+  }
+
+  $('do-signin').addEventListener('click', async function () {
+    signInError('');
+    $('resend-row').hidden = true;
+    accountBusy(true);
+    try {
+      const { email } = credentials();
+      const user = await account.signIn(email, credentials().password);
+      $('account-password').value = '';
+      await adoptAccount(user);
+    } catch (error) {
+      signInError(error.message);
+      if (error.needsVerification) $('resend-row').hidden = false;
+    } finally {
+      accountBusy(false);
+    }
+  });
+
+  $('do-signup').addEventListener('click', async function () {
+    signInError('');
+    accountBusy(true);
+    try {
+      const { email, password } = credentials();
+      const result = await account.signUp(email, password);
+      $('account-password').value = '';
+      const note = $('verified-note');
+      note.hidden = false;
+      note.classList.remove('bad');
+      note.textContent = result.message;
+      $('resend-row').hidden = false;
+    } catch (error) {
+      signInError(error.message);
+    } finally {
+      accountBusy(false);
+    }
+  });
+
+  $('do-resend').addEventListener('click', async function () {
+    signInError('');
+    accountBusy(true);
+    try {
+      const result = await account.resendVerification(credentials().email);
+      const note = $('verified-note');
+      note.hidden = false;
+      note.classList.remove('bad');
+      note.textContent = result.message;
+    } catch (error) {
+      signInError(error.message);
+    } finally {
+      accountBusy(false);
+    }
+  });
+
+  $('account-password').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') $('do-signin').click();
   });
 
   const existing = session.current();
-  if (existing) {
+  if (existing && existing.kind !== 'account') {
     adoptIdentity(existing);
   } else {
     render();
+    // A session cookie outlives a reload, so check for one before asking again.
+    if (isServed) {
+      account.me().then(function (user) {
+        if (user) adoptAccount(user);
+      }).catch(function () { /* no API here; the other sign-in options still work */ });
+    }
   }
 
   if (!canSync && state.settings.canvasToken) {

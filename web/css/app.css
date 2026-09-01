@@ -353,3 +353,14 @@ a.title:hover { color: var(--royal-text); text-decoration: underline; text-under
   .cell { min-height: 54px; }
   .calendar-nav strong { min-width: 120px; }
 }
+
+/* Account sign-in */
+.linklike {
+  background: none; border: none; padding: 0; font: inherit; color: var(--royal-text);
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+.note-inline {
+  border: 1px solid var(--royal-line); background: var(--royal-soft); color: var(--royal-text);
+  border-radius: var(--radius-sm); padding: 9px 12px; margin-bottom: 12px; font-size: 13px;
+}
+.note-inline.bad { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }

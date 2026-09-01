@@ -34,6 +34,28 @@
         Each person gets their own deadlines, settings, and Canvas connection in this browser.
       </p>
 
+      <div id="signin-account" class="signin-option" hidden>
+        <div id="verified-note" class="note-inline" hidden></div>
+        <label class="field">
+          <span>Email</span>
+          <input type="email" id="account-email" autocomplete="email" placeholder="you@byu.edu">
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input type="password" id="account-password" autocomplete="current-password" placeholder="At least 10 characters">
+        </label>
+        <div class="row">
+          <button id="do-signin" class="button primary">Sign in</button>
+          <button id="do-signup" class="button">Create account</button>
+        </div>
+        <p class="muted small" id="account-hint">
+          A new account has to confirm its email address before it can sign in.
+        </p>
+        <p class="muted small" id="resend-row" hidden>
+          Didn't get the email? <button id="do-resend" class="linklike">Send it again</button>
+        </p>
+      </div>
+
       <div id="signin-chrome" class="signin-option" hidden>
         <button id="use-chrome" class="button primary">Use my Chrome account</button>
         <p class="muted small">The account this Chrome profile is already signed in as. Nothing to type.</p>
@@ -54,12 +76,7 @@
 
       <p id="signin-error" class="muted small" role="alert"></p>
 
-      <p class="muted small note">
-        <strong>What this does:</strong> keeps each person's data separate and labelled.
-        <strong>What it does not do:</strong> protect it. Everything is stored in this browser and can be
-        read from the developer console by anyone using this computer, signed in or not.
-        Don't rely on it on a shared machine — use <em>Erase everything</em> when you're done.
-      </p>
+      <p class="muted small note" id="signin-note"></p>
     </div>
   </section>
 
@@ -147,6 +164,7 @@
   <script src="js/store.js"></script>
   <script src="config.js"></script>
   <script src="js/session.js"></script>
+  <script src="js/account.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

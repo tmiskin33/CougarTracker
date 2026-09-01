@@ -106,11 +106,68 @@ except live Canvas sync — from `file://` there is no proxy to route through.
 
 ---
 
+## Accounts (email, password, verification)
+
+An account is the only mode where your data is genuinely private rather than
+merely separated. Everything else keeps data in the browser, where anyone at the
+machine can read it from the console. An account keeps it in a database behind a
+verified session.
+
+**Sign up → verify → sign in.** A new account cannot sign in until it has opened
+the link emailed to it, so an unconfirmed address never becomes a usable account.
+
+### What it needs
+
+A database and an email sender. Both have free tiers, and without them the rest
+of the app still works — the sign-in screen falls back to Chrome accounts and
+local profiles.
+
+| Environment variable | Where it comes from |
+|---|---|
+| `DATABASE_URL` | Vercel → Storage → **Neon (Postgres)**. Vercel sets this for you. |
+| `RESEND_API_KEY` | [resend.com](https://resend.com) → API Keys |
+| `MAIL_FROM` | A sender on a domain verified with Resend, e.g. `Deadlines <noreply@yourdomain>` |
+| `PUBLIC_BASE_URL` | Optional. Only if the emailed link must point somewhere other than the deployment's own URL. |
+
+The schema is created on first use, so there is no migration step. With
+`RESEND_API_KEY` unset the verification link is written to the function log
+instead of emailed — useful locally, and it says so in the log rather than
+pretending an email went out.
+
+### How the security works
+
+- **Passwords** are hashed with scrypt (N=16384, r=8, p=1), a random 16-byte
+  salt each, compared in constant time. The plaintext is never stored, logged,
+  or returned. Minimum 10 characters, checked against a small breach list —
+  length, not a rule that pushes everyone towards `Password1!`.
+- **Session tokens** are 32 random bytes; only a SHA-256 digest is stored, so a
+  database leak does not hand over live sessions. The cookie is `HttpOnly`
+  (script cannot read it — the whole point, since script is what could read
+  localStorage), `Secure`, and `SameSite=Lax`.
+- **Verification links** are 32 random bytes, stored as a digest, valid 24
+  hours, single-use. Following one does **not** create a session: things that
+  follow links in email — scanners, previewers — would otherwise be handed one.
+- **Account enumeration** is closed off. Signing up with an address that already
+  has a verified account returns exactly what a new address returns. A wrong
+  password and an unknown address return an identical 401, and an unknown
+  address is still compared against a decoy hash so it takes the same time.
+- **Throttling**: 5 sign-ups per IP per hour, 10 sign-in attempts per
+  email-and-IP per 15 minutes.
+
+### What an account still does not protect
+
+Your **Canvas token** stays in the browser even with an account, and reaches
+Canvas through the proxy function. An account protects your *deadline list* from
+other people at your computer; it does not turn a browser into a keychain.
+Revoking the token from Canvas → Account → Settings remains the real safety net.
+
 ## Signing in
 
 Each person gets their own deadlines, settings, and Canvas connection. Three
 ways to say who you are, in the order that needs the least setup:
 
+0. **An account** — email and password with a verified address. Data lives on
+   the server, so it is private to you. Needs the variables above.
 1. **Your Chrome account** — extension only. `chrome.identity` reports the
    account this Chrome profile is already signed in as. Nothing to configure,
    nothing to type.
@@ -207,7 +264,11 @@ js/ls-parse.js      heuristic scraper      ─┘  tested against the same fixtu
 js/canvas.js        Canvas REST client
 js/store.js         merge rules, grouping, per-identity localStorage
 js/session.js       who is signed in, and which storage slice is theirs
+js/account.js       account API client and server-backed storage
 config.js           optional Google OAuth client ID
+api/auth/*.js       sign up, verify, sign in, sign out, resend, me
+api/deadlines.js    per-account storage behind a verified session
+api/_lib/*.js       hashing, sessions, database, email, validation
 js/app.js           rendering and wiring
 js/sw.js            opens the app in a tab when the toolbar icon is clicked
 manifest.json       Chrome extension (MV3)
@@ -229,8 +290,12 @@ finally arrives, one fixture update tests both.
 node --test web/test/*.test.js
 ```
 
-No dependencies and no network. 47 tests covering the HTML parser, every written
+No network and no database — the endpoint tests run the real handlers against
+an in-memory store. 77 tests covering the HTML parser, every written
 date form, the scraper's two passes and its failure states, the merge rules —
 including that a hand-set completion survives the next sync and that
-"Not submitted" is never read as submitted — the proxy's rejection paths, and
-that one profile's Canvas token never leaks into another's.
+"Not submitted" is never read as submitted — the proxy's rejection paths, that
+one profile's Canvas token never leaks into another's, and the account
+properties above: a stored hash that contains no trace of the password, sign-up
+that gives nothing away about existing accounts, verification links that cannot
+be replayed, and one account being unable to read another's deadlines.
