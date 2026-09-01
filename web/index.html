@@ -20,10 +20,50 @@
         <span>Show completed</span>
       </label>
       <button id="refresh" class="button">Refresh</button>
+      <span class="account" id="account" hidden>
+        <span id="account-name"></span>
+        <button id="sign-out" class="button ghost">Switch</button>
+      </span>
     </div>
   </header>
 
-  <main>
+  <section id="sign-in" class="signin" hidden>
+    <div class="card signin-card">
+      <h2>Who's using this?</h2>
+      <p class="muted small">
+        Each person gets their own deadlines, settings, and Canvas connection in this browser.
+      </p>
+
+      <div id="signin-chrome" class="signin-option" hidden>
+        <button id="use-chrome" class="button primary">Use my Chrome account</button>
+        <p class="muted small">The account this Chrome profile is already signed in as. Nothing to type.</p>
+      </div>
+
+      <div id="signin-google" class="signin-option" hidden>
+        <div id="google-button"></div>
+        <p class="muted small">Signs in with Google in any browser.</p>
+      </div>
+
+      <div class="signin-option">
+        <label class="field">
+          <span>Or use a profile name</span>
+          <input type="text" id="local-name" placeholder="e.g. Tanner" autocomplete="off">
+        </label>
+        <button id="use-local" class="button">Continue</button>
+      </div>
+
+      <p id="signin-error" class="muted small" role="alert"></p>
+
+      <p class="muted small note">
+        <strong>What this does:</strong> keeps each person's data separate and labelled.
+        <strong>What it does not do:</strong> protect it. Everything is stored in this browser and can be
+        read from the developer console by anyone using this computer, signed in or not.
+        Don't rely on it on a shared machine — use <em>Erase everything</em> when you're done.
+      </p>
+    </div>
+  </section>
+
+  <main id="app">
     <div id="banners" aria-live="polite"></div>
 
     <section id="view-list" class="view" role="tabpanel"></section>
@@ -104,6 +144,8 @@
   <script src="js/ls-parse.js"></script>
   <script src="js/canvas.js"></script>
   <script src="js/store.js"></script>
+  <script src="config.js"></script>
+  <script src="js/session.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

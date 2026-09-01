@@ -128,26 +128,39 @@
     learningSuitePath: '/student/assignments'
   };
 
-  function createStorage(backing) {
+  // `prefix` namespaces every key, so two people on one browser keep separate
+  // deadlines, settings, and Canvas tokens. It partitions; it does not protect —
+  // anything in localStorage is readable from the console regardless of who is
+  // signed in.
+  function createStorage(backing, prefix) {
     const store = backing || (typeof localStorage !== 'undefined' ? localStorage : null);
+    const at = prefix || '';
+    const deadlinesKey = at + STORAGE_KEY;
+    const settingsKey = at + SETTINGS_KEY;
+
     return {
+      prefix: at,
       loadDeadlines() {
         if (!store) return [];
-        try { return JSON.parse(store.getItem(STORAGE_KEY) || '[]'); } catch (_) { return []; }
+        try { return JSON.parse(store.getItem(deadlinesKey) || '[]'); } catch (_) { return []; }
       },
       saveDeadlines(deadlines) {
         if (!store) return;
-        try { store.setItem(STORAGE_KEY, JSON.stringify(deadlines)); } catch (_) { /* private mode */ }
+        try { store.setItem(deadlinesKey, JSON.stringify(deadlines)); } catch (_) { /* private mode */ }
       },
       loadSettings() {
         if (!store) return Object.assign({}, DEFAULT_SETTINGS);
         try {
-          return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(store.getItem(SETTINGS_KEY) || '{}'));
+          return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(store.getItem(settingsKey) || '{}'));
         } catch (_) { return Object.assign({}, DEFAULT_SETTINGS); }
       },
       saveSettings(settings) {
         if (!store) return;
-        try { store.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) { /* private mode */ }
+        try { store.setItem(settingsKey, JSON.stringify(settings)); } catch (_) { /* private mode */ }
+      },
+      erase() {
+        if (!store) return;
+        try { store.removeItem(deadlinesKey); store.removeItem(settingsKey); } catch (_) { /* ignore */ }
       }
     };
   }

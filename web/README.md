@@ -106,6 +106,43 @@ except live Canvas sync — from `file://` there is no proxy to route through.
 
 ---
 
+## Signing in
+
+Each person gets their own deadlines, settings, and Canvas connection. Three
+ways to say who you are, in the order that needs the least setup:
+
+1. **Your Chrome account** — extension only. `chrome.identity` reports the
+   account this Chrome profile is already signed in as. Nothing to configure,
+   nothing to type.
+2. **Sign in with Google** — any browser, but needs a Google OAuth client ID in
+   `config.js`. Create one at *console.cloud.google.com → APIs & Services →
+   Credentials → OAuth client ID → Web application*, add your deployment's URL
+   under **Authorised JavaScript origins**, and paste the ID in. It is a public
+   identifier, not a secret, so committing it is fine.
+3. **A profile name** — type a name, get a space. No account, no network, works
+   everywhere including from disk.
+
+Switching accounts swaps the whole slice: deadlines, settings, and the Canvas
+token are all namespaced per identity, and the namespace is a hash, so your
+email address is not left lying around in storage keys.
+
+### What signing in does not do
+
+**It does not protect anything.** Every mode stores data in this browser's
+`localStorage`, which anyone at this computer can read from the developer
+console whether or not they are signed in — and can read *every* profile's
+slice, not just their own. The Google path does not change that: the app reads
+the account out of the credential to know which space to open, and deliberately
+does not verify it, because with no server there is nothing to verify against
+and treating an unverified claim as proof would be worse than not checking.
+
+So this is the right tool for *"my roommate and I share a laptop and want
+separate lists"*, and the wrong tool for *"my roommate must not be able to read
+my list"*. The second needs the data on a server that checks who is asking,
+which means a database and real session handling. On a shared machine, use
+**Erase everything** when you are done — and remember a Canvas token can be
+revoked from Canvas → Account → Settings at any time.
+
 ## Importing Learning Suite
 
 Because a page cannot fetch Learning Suite, you bring the page to the app:
@@ -168,7 +205,9 @@ js/html-parse.js    forgiving HTML parser  ─┐
 js/ls-dates.js      written-date parser     ├─ ports of the Swift originals,
 js/ls-parse.js      heuristic scraper      ─┘  tested against the same fixtures
 js/canvas.js        Canvas REST client
-js/store.js         merge rules, grouping, localStorage
+js/store.js         merge rules, grouping, per-identity localStorage
+js/session.js       who is signed in, and which storage slice is theirs
+config.js           optional Google OAuth client ID
 js/app.js           rendering and wiring
 js/sw.js            opens the app in a tab when the toolbar icon is clicked
 manifest.json       Chrome extension (MV3)
@@ -187,10 +226,11 @@ finally arrives, one fixture update tests both.
 ## Tests
 
 ```
-node --test web/test/parsing.test.js web/test/store.test.js web/test/proxy.test.js
+node --test web/test/*.test.js
 ```
 
-No dependencies and no network. Covers the HTML parser, every written date form,
-the scraper's two passes and its failure states, and all the merge rules —
-including that a hand-set completion survives the next sync, and that
-"Not submitted" is never read as submitted.
+No dependencies and no network. 47 tests covering the HTML parser, every written
+date form, the scraper's two passes and its failure states, the merge rules —
+including that a hand-set completion survives the next sync and that
+"Not submitted" is never read as submitted — the proxy's rejection paths, and
+that one profile's Canvas token never leaks into another's.

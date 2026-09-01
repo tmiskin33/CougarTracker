@@ -2,19 +2,33 @@
 (function () {
   'use strict';
 
-  const { parseHTML } = CDT;
   const store = CDT;
-  const storage = CDT.createStorage();
+  const config = (typeof window !== 'undefined' && window.CDT_CONFIG) || {};
+  const session = CDT.createSession({ googleClientId: config.GOOGLE_CLIENT_ID });
+
+  // Storage is per-identity, so switching accounts swaps the whole slice.
+  let storage = null;
 
   const state = {
-    deadlines: storage.loadDeadlines(),
-    settings: storage.loadSettings(),
+    identity: null,
+    deadlines: [],
+    settings: Object.assign({}, store.DEFAULT_SETTINGS),
     view: 'list',
     calendarMode: 'month',
     anchor: new Date(),
     selected: new Date(),
     banners: []
   };
+
+  function adoptIdentity(identity) {
+    state.identity = identity;
+    storage = CDT.createStorage(null, session.namespaceFor(identity));
+    state.deadlines = storage.loadDeadlines();
+    state.settings = storage.loadSettings();
+    state.banners = [];
+    state.view = 'list';
+    render();
+  }
 
   // A page loaded from an extension origin has host_permissions, so its fetches
   // are exempt from CORS and can call Canvas directly. A page served over http
@@ -38,6 +52,7 @@
   };
 
   function save() {
+    if (!storage) return;
     storage.saveDeadlines(state.deadlines);
     storage.saveSettings(state.settings);
   }
@@ -226,6 +241,18 @@
   function render() {
     const now = new Date();
 
+    // No identity yet: show only the sign-in gate.
+    const signedIn = !!state.identity;
+    $('sign-in').hidden = signedIn;
+    $('app').hidden = !signedIn;
+    document.querySelector('.bar').hidden = !signedIn;
+    $('account').hidden = !signedIn;
+    if (signedIn) {
+      $('account-name').textContent = state.identity.name;
+      $('account-name').title = state.identity.email || state.identity.name;
+    }
+    if (!signedIn) return;
+
     document.querySelectorAll('.tab').forEach(function (tab) {
       const active = tab.dataset.view === state.view;
       tab.setAttribute('aria-selected', String(active));
@@ -388,13 +415,66 @@
   });
 
   $('erase').addEventListener('click', function () {
-    if (!confirm('Erase all cached deadlines, your Canvas token, and settings from this browser?')) return;
+    const who = state.identity ? state.identity.name : 'this profile';
+    if (!confirm('Erase ' + who + '\u2019s cached deadlines, Canvas token, and settings from this browser?')) return;
     state.deadlines = [];
     state.settings = Object.assign({}, store.DEFAULT_SETTINGS);
-    save();
+    if (storage) storage.erase();
     state.banners = [];
     render();
   });
+
+  // ---------- sign in ----------
+
+  function signInError(message) {
+    $('signin-error').textContent = message || '';
+  }
+
+  $('signin-chrome').hidden = !session.available.chrome;
+  $('signin-google').hidden = !session.available.google;
+
+  $('use-chrome').addEventListener('click', function () {
+    signInError('');
+    session.signInWithChrome().then(adoptIdentity).catch(function (error) {
+      signInError(error.message);
+    });
+  });
+
+  $('use-local').addEventListener('click', function () {
+    signInError('');
+    try {
+      adoptIdentity(session.signInLocally($('local-name').value));
+    } catch (error) {
+      signInError(error.message);
+    }
+  });
+
+  $('local-name').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') $('use-local').click();
+  });
+
+  if (session.available.google) {
+    session.signInWithGoogle($('google-button')).then(adoptIdentity).catch(function (error) {
+      signInError(error.message);
+    });
+  }
+
+  $('sign-out').addEventListener('click', function () {
+    session.signOut();
+    state.identity = null;
+    storage = null;
+    state.deadlines = [];
+    state.settings = Object.assign({}, store.DEFAULT_SETTINGS);
+    signInError('');
+    render();
+  });
+
+  const existing = session.current();
+  if (existing) {
+    adoptIdentity(existing);
+  } else {
+    render();
+  }
 
   if (!canSync && state.settings.canvasToken) {
     banner('error', 'Live sync unavailable here',
@@ -402,6 +482,4 @@
       'Load this folder as a Chrome extension, or open the deployed site; cached deadlines and ' +
       'Learning Suite import still work either way.');
   }
-
-  render();
 }());

@@ -5,6 +5,7 @@
   "description": "Canvas and BYU Learning Suite deadlines in one list and calendar.",
   "action": { "default_title": "Cougar Deadline Tracker" },
   "background": { "service_worker": "js/sw.js" },
+  "permissions": ["identity", "identity.email"],
   "host_permissions": [
     "https://byu.instructure.com/*",
     "https://learningsuite.byu.edu/*"

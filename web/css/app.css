@@ -153,3 +153,17 @@ kbd {
   .bar h1 { width: 100%; margin-bottom: 4px; }
   .cell { min-height: 48px; }
 }
+
+/* Sign-in gate */
+.signin { display: flex; justify-content: center; padding: 48px 16px; }
+.signin-card { max-width: 420px; width: 100%; }
+.signin-card h2 { font-size: 18px; }
+.signin-option { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.signin-option:last-of-type { border-bottom: none; }
+.signin-option .muted { margin: 6px 0 0; }
+.signin-card .note {
+  border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; line-height: 1.5;
+}
+#signin-error:empty { display: none; }
+#signin-error { color: var(--danger); }
+.account { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
