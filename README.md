@@ -37,6 +37,21 @@ issue and can revoke.
 
 ---
 
+## Two front ends
+
+| | Where | Live Canvas sync | Learning Suite |
+|---|---|---|---|
+| **iOS app** (this folder) | iPhone, iOS 17+ | ✅ | ✅ WebView login + scrape |
+| **[Web / Chrome extension](web/)** | any browser | extension only | paste the page source |
+
+The browser cannot fetch either system directly — Canvas sends no CORS headers
+and the same-origin policy forbids reading Learning Suite — so the web version
+gets live Canvas sync only when loaded as a Chrome extension, and takes Learning
+Suite as pasted page source. [`web/README.md`](web/README.md) has the detail,
+including why the Canvas token is less protected in a browser than on the phone.
+
+Both share the same parsing fixtures, so the two implementations stay in step.
+
 ## What it does
 
 **Day list.** Every deadline grouped by due date, chronological. Each row shows

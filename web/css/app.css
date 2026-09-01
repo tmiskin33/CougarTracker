@@ -1,0 +1,155 @@
+/* Neutral, adaptive theme — no brand colours, follows the system light/dark
+   setting and the system accent where the platform exposes one. */
+:root {
+  color-scheme: light dark;
+  --bg: #f6f6f7;
+  --surface: #ffffff;
+  --border: #dcdce0;
+  --text: #17171a;
+  --muted: #6b6b73;
+  --accent: #2b6cb0;
+  --danger: #b42318;
+  --ok: #1a7f47;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131316;
+    --surface: #1c1c20;
+    --border: #34343b;
+    --text: #ececf0;
+    --muted: #9a9aa4;
+    --accent: #7aa7d9;
+    --danger: #f0837a;
+    --ok: #6cc48f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.bar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.bar h1 { font-size: 17px; margin: 0; margin-right: auto; }
+.bar-actions { display: flex; gap: 12px; align-items: center; }
+
+.tabs { display: flex; gap: 4px; }
+.tab {
+  border: 1px solid transparent; background: none; color: var(--muted);
+  padding: 6px 12px; border-radius: var(--radius); cursor: pointer; font: inherit;
+}
+.tab[aria-selected="true"] { color: var(--text); background: var(--bg); border-color: var(--border); }
+.tab:focus-visible, .button:focus-visible, .seg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main { max-width: 860px; margin: 0 auto; padding: 16px; }
+
+.button {
+  font: inherit; padding: 6px 12px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
+}
+.button:hover { border-color: var(--muted); }
+.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.button.danger { color: var(--danger); }
+.button.ghost { border-color: transparent; background: none; }
+
+.toggle { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
+}
+.card h2 { font-size: 15px; margin: 0 0 8px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.field { display: block; margin: 10px 0; }
+.field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.field input, .field textarea {
+  width: 100%; font: inherit; padding: 8px 10px; color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+}
+.field textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; resize: vertical; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+kbd {
+  font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+  border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; background: var(--bg);
+}
+
+.banner {
+  border: 1px solid var(--border); border-left: 3px solid var(--danger);
+  background: var(--surface); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 12px;
+}
+.banner.ok { border-left-color: var(--ok); }
+.banner h3 { margin: 0 0 4px; font-size: 14px; }
+.banner p { margin: 0; font-size: 13px; color: var(--muted); }
+
+.day-heading {
+  font-size: 13px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); margin: 20px 0 8px; display: flex; justify-content: space-between;
+}
+.day-heading.past { color: var(--danger); }
+
+.deadline {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 12px; margin-bottom: 6px;
+}
+.deadline .check {
+  appearance: none; width: 18px; height: 18px; margin-top: 2px; flex: none;
+  border: 1.5px solid var(--muted); border-radius: 50%; cursor: pointer; background: none;
+}
+.deadline .check:checked { background: var(--muted); border-color: var(--muted); }
+.deadline .body { flex: 1; min-width: 0; }
+.deadline .title { display: block; color: inherit; }
+.deadline.done .title { text-decoration: line-through; color: var(--muted); }
+.deadline .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.deadline .when { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); text-align: right; flex: none; }
+.deadline.overdue { border-left: 3px solid var(--danger); }
+.deadline.overdue .when { color: var(--danger); }
+.deadline .flag { display: block; font-size: 11px; font-weight: 600; color: var(--danger); }
+
+.empty { color: var(--muted); text-align: center; padding: 40px 20px; }
+
+.calendar-head { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.seg { font: inherit; padding: 6px 14px; border: none; background: var(--surface); color: var(--muted); cursor: pointer; }
+.seg.is-active { background: var(--accent); color: #fff; }
+.calendar-nav { display: flex; gap: 6px; align-items: center; }
+
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.grid .weekday { text-align: center; font-size: 11px; color: var(--muted); padding: 4px 0; }
+.cell {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  min-height: 58px; padding: 4px; cursor: pointer; font: inherit; color: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.cell.outside { opacity: .45; }
+.cell.today { border-color: var(--accent); }
+.cell.selected { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+.cell .num { font-variant-numeric: tabular-nums; }
+.cell .dots { display: flex; gap: 2px; }
+.cell .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.cell .dot.overdue { background: var(--danger); }
+.cell .count {
+  font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+  padding: 0 5px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent);
+}
+.cell .count.overdue { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
+
+@media (max-width: 560px) {
+  .bar h1 { width: 100%; margin-bottom: 4px; }
+  .cell { min-height: 48px; }
+}

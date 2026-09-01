@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cougar Deadline Tracker</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>Deadlines</h1>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" data-view="list" aria-selected="true">List</button>
+      <button class="tab" role="tab" data-view="calendar" aria-selected="false">Calendar</button>
+      <button class="tab" role="tab" data-view="settings" aria-selected="false">Settings</button>
+    </nav>
+    <div class="bar-actions">
+      <label class="toggle">
+        <input type="checkbox" id="shows-completed">
+        <span>Show completed</span>
+      </label>
+      <button id="refresh" class="button">Refresh</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="banners" aria-live="polite"></div>
+
+    <section id="view-list" class="view" role="tabpanel"></section>
+
+    <section id="view-calendar" class="view" role="tabpanel" hidden>
+      <div class="calendar-head">
+        <div class="segmented" role="group" aria-label="Calendar density">
+          <button class="seg" data-mode="day">Day</button>
+          <button class="seg" data-mode="week">Week</button>
+          <button class="seg is-active" data-mode="month">Month</button>
+        </div>
+        <div class="calendar-nav">
+          <button id="cal-prev" class="button ghost" aria-label="Previous">‹</button>
+          <strong id="cal-title"></strong>
+          <button id="cal-next" class="button ghost" aria-label="Next">›</button>
+          <button id="cal-today" class="button ghost">Today</button>
+        </div>
+      </div>
+      <div id="calendar-grid"></div>
+      <h2 class="day-heading" id="calendar-day-heading"></h2>
+      <div id="calendar-day-list"></div>
+    </section>
+
+    <section id="view-settings" class="view" role="tabpanel" hidden>
+      <div class="card">
+        <h2>Canvas</h2>
+        <p class="muted" id="canvas-status">Not connected.</p>
+        <label class="field">
+          <span>Canvas site</span>
+          <input type="text" id="canvas-host" placeholder="byu.instructure.com" autocomplete="off" spellcheck="false">
+        </label>
+        <label class="field">
+          <span>Access token</span>
+          <input type="password" id="canvas-token" placeholder="Paste your Canvas token" autocomplete="off" spellcheck="false">
+        </label>
+        <p class="muted small">
+          Canvas → Account → Settings → <strong>+ New Access Token</strong>. Canvas shows it once.
+          It is kept in this browser's local storage only — see the security note in the README.
+        </p>
+        <div class="row">
+          <button id="canvas-connect" class="button primary">Connect Canvas</button>
+          <button id="canvas-forget" class="button danger">Disconnect</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Learning Suite</h2>
+        <p class="muted" id="ls-status"></p>
+        <p class="muted small">
+          A web page cannot read Learning Suite directly — the browser forbids one site from
+          fetching another's pages. Paste the page source instead: sign in to Learning Suite,
+          open your assignments page, press <kbd>Ctrl</kbd>+<kbd>U</kbd> (view source),
+          select all, and paste it below. Nothing is uploaded; the parsing happens in this tab.
+        </p>
+        <label class="field">
+          <span>Assignments page source</span>
+          <textarea id="ls-html" rows="6" placeholder="Paste the HTML here…" spellcheck="false"></textarea>
+        </label>
+        <div class="row">
+          <button id="ls-import" class="button primary">Read assignments</button>
+          <button id="ls-forget" class="button danger">Remove Learning Suite items</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Data</h2>
+        <p class="muted small" id="data-summary"></p>
+        <div class="row">
+          <button id="export" class="button">Export JSON</button>
+          <button id="erase" class="button danger">Erase everything</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/html-parse.js"></script>
+  <script src="js/ls-dates.js"></script>
+  <script src="js/ls-parse.js"></script>
+  <script src="js/canvas.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

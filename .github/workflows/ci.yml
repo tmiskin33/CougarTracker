@@ -90,3 +90,15 @@ jobs:
             build.log
             test.log
           if-no-files-found: ignore
+
+  web-tests:
+    # The web front end shares its parsing fixtures with the Swift tests, so a
+    # change to one implementation that breaks the other shows up here.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Test
+        run: node --test web/test/parsing.test.js web/test/store.test.js
