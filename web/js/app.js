@@ -51,6 +51,32 @@
     return node;
   };
 
+  // Small line icons per item type. Static markup, so innerHTML is safe here —
+  // nothing user-supplied ever reaches it.
+  const TYPE_ICONS = {
+    assignment: '<path d="M4 2h5l3 3v9H4z"/><path d="M9 2v3h3"/>',
+    quiz: '<path d="M3 4.5l1.5 1.5L7 3.5"/><path d="M3 11l1.5 1.5L7 10"/><path d="M9 5h4"/><path d="M9 11.5h4"/>',
+    discussion: '<path d="M2 3h9v6H6l-3 2.5V9H2z"/><path d="M13 6h1v6h-1l-2 1.5V12"/>',
+    exam: '<path d="M8 2l6 3-6 3-6-3z"/><path d="M4 7v4c0 1 2 2 4 2s4-1 4-2V7"/>',
+    other: '<circle cx="8" cy="8" r="5"/>'
+  };
+
+  function typeIcon(type) {
+    const span = document.createElement('span');
+    span.innerHTML =
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      (TYPE_ICONS[type] || TYPE_ICONS.other) + '</svg>';
+    return span.firstChild;
+  }
+
+  function pill(className, text, type) {
+    const node = el('span', 'pill ' + className);
+    if (type) node.appendChild(typeIcon(type));
+    node.appendChild(document.createTextNode(text));
+    return node;
+  }
+
   function save() {
     if (!storage) return;
     storage.saveDeadlines(state.deadlines);
@@ -109,9 +135,10 @@
     } else {
       body.appendChild(el('span', 'title', deadline.title));
     }
-    const label = deadline.courseCode || deadline.courseName;
-    const sourceName = deadline.source === 'canvas' ? 'Canvas' : 'Learning Suite';
-    body.appendChild(el('div', 'meta', label + ' · ' + sourceName + ' · ' + deadline.type));
+    const meta = el('div', 'meta');
+    meta.appendChild(pill('course', deadline.courseCode || deadline.courseName, deadline.type));
+    meta.appendChild(pill(deadline.source, deadline.source === 'canvas' ? 'Canvas' : 'Learning Suite'));
+    body.appendChild(meta);
 
     const when = el('div', 'when');
     when.appendChild(document.createTextNode(timeFormat.format(new Date(deadline.dueDate))));
@@ -132,7 +159,7 @@
       const heading = el('h2', 'day-heading' + (day.date < store.startOfDay(now) ? ' past' : ''));
       heading.appendChild(el('span', null, dayTitle(day.date, now)));
       const outstanding = day.deadlines.filter((d) => !d.isCompleted).length;
-      if (outstanding) heading.appendChild(el('span', null, String(outstanding)));
+      if (outstanding) heading.appendChild(el('span', 'n', String(outstanding)));
       container.appendChild(heading);
       for (const deadline of day.deadlines) container.appendChild(deadlineRow(deadline, now));
     }
@@ -213,9 +240,9 @@
       grid.appendChild(wrapper);
     }
 
-    $('calendar-day-heading').textContent = longDayFormat.format(state.selected);
     const onDay = visible.filter((d) => store.countsKey(d.dueDate) === store.countsKey(state.selected));
-    renderList($('calendar-day-list'), onDay, now, 'Nothing due on this day.');
+    renderList($('calendar-day-list'), onDay, now,
+      'Nothing due on ' + longDayFormat.format(state.selected) + '.');
   }
 
   function renderSettings() {
@@ -238,6 +265,40 @@
       'Stored in this browser only.';
   }
 
+  // A glance at the shape of the week, above the list.
+  function renderStats(now) {
+    const container = $('stats');
+    const outstanding = state.deadlines.filter((d) => !d.isCompleted);
+    container.hidden = state.view !== 'list' || !state.deadlines.length;
+    if (container.hidden) return;
+
+    const startToday = store.startOfDay(now);
+    const endToday = new Date(startToday); endToday.setDate(endToday.getDate() + 1);
+    const endWeek = new Date(startToday); endWeek.setDate(endWeek.getDate() + 7);
+
+    const overdue = outstanding.filter((d) => new Date(d.dueDate) < now).length;
+    const today = outstanding.filter(function (d) {
+      const due = new Date(d.dueDate);
+      return due >= startToday && due < endToday;
+    }).length;
+    const week = outstanding.filter(function (d) {
+      const due = new Date(d.dueDate);
+      return due >= startToday && due < endWeek;
+    }).length;
+
+    container.innerHTML = '';
+    [
+      { n: overdue, k: 'Overdue', overdue: overdue > 0 },
+      { n: today, k: 'Due today' },
+      { n: week, k: 'Next 7 days' }
+    ].forEach(function (entry) {
+      const card = el('div', 'stat' + (entry.overdue ? ' is-overdue' : ''));
+      card.appendChild(el('span', 'n', String(entry.n)));
+      card.appendChild(el('span', 'k', entry.k));
+      container.appendChild(card);
+    });
+  }
+
   function render() {
     const now = new Date();
 
@@ -251,7 +312,7 @@
       $('account-name').textContent = state.identity.name;
       $('account-name').title = state.identity.email || state.identity.name;
     }
-    if (!signedIn) return;
+    if (!signedIn) { $('stats').hidden = true; return; }
 
     document.querySelectorAll('.tab').forEach(function (tab) {
       const active = tab.dataset.view === state.view;
@@ -273,6 +334,8 @@
       node.appendChild(el('p', null, item.message));
       banners.appendChild(node);
     }
+
+    renderStats(now);
 
     if (state.view === 'list') {
       renderList($('view-list'), visibleDeadlines(), now,
