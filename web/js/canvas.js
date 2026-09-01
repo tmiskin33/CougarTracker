@@ -98,13 +98,20 @@
     return null;
   }
 
-  function createClient(host, token, fetchImpl) {
-    const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch.bind(null) : null);
+  // `proxy` is the path of a same-origin forwarder (the Vercel function in
+  // api/canvas.js). With one, calls go server-side and CORS never applies.
+  // Without one, calls go straight to Canvas, which only works from an
+  // extension page.
+  function createClient(host, token, options) {
+    const opts = options || {};
+    const proxy = opts.proxy || null;
+    const doFetch = opts.fetch || (typeof fetch === 'function' ? fetch.bind(null) : null);
 
     async function request(url) {
+      const target = proxy ? proxy + '?url=' + encodeURIComponent(url) : url;
       let response;
       try {
-        response = await doFetch(url, {
+        response = await doFetch(target, {
           headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' }
         });
       } catch (error) {
@@ -112,9 +119,24 @@
         // from being offline — so say what is actually most likely.
         throw new CanvasError(
           'blocked',
-          'The browser blocked the request to Canvas. Canvas does not allow direct calls from web pages; ' +
-          'load this as a Chrome extension (see the README) to sync.'
+          proxy
+            ? 'Could not reach the Canvas proxy on this site. Check your connection, or load this folder as a Chrome extension instead.'
+            : 'The browser blocked the request to Canvas. Canvas does not allow direct calls from web pages; ' +
+              'load this as a Chrome extension, or deploy with the api/canvas.js proxy (see the README).'
         );
+      }
+
+      // A missing function returns Vercel's HTML 404, not the proxy's JSON —
+      // which means the site was deployed without api/canvas.js.
+      if (proxy && response.status === 404) {
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('json')) {
+          throw new CanvasError(
+            'blocked',
+            'This site was deployed without the Canvas proxy (api/canvas.js), so live sync is unavailable here. ' +
+            'Cached deadlines and Learning Suite import still work.'
+          );
+        }
       }
 
       if (response.status === 401) {

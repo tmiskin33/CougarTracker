@@ -101,4 +101,4 @@ jobs:
         with:
           node-version: '20'
       - name: Test
-        run: node --test web/test/parsing.test.js web/test/store.test.js
+        run: node --test web/test/parsing.test.js web/test/store.test.js web/test/proxy.test.js

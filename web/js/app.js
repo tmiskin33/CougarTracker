@@ -17,8 +17,17 @@
   };
 
   // A page loaded from an extension origin has host_permissions, so its fetches
-  // are exempt from CORS. A plain page does not, and Canvas will refuse it.
+  // are exempt from CORS and can call Canvas directly. A page served over http
+  // cannot, so it routes through the same-origin proxy function instead. A page
+  // opened from disk has neither, and cannot sync at all.
   const isExtension = typeof chrome !== 'undefined' && !!(chrome.runtime && chrome.runtime.id);
+  const isServed = location.protocol === 'http:' || location.protocol === 'https:';
+  const canvasProxy = !isExtension && isServed ? '/api/canvas' : null;
+  const canSync = isExtension || !!canvasProxy;
+
+  function canvasClient(host, token) {
+    return CDT.createClient(host, token, { proxy: canvasProxy });
+  }
 
   const $ = (id) => document.getElementById(id);
   const el = (tag, className, text) => {
@@ -199,7 +208,9 @@
     const token = state.settings.canvasToken;
     $('canvas-status').textContent = token
       ? 'Connected' + (state.settings.canvasName ? ' as ' + state.settings.canvasName : '') + '.'
-      : (isExtension ? 'Not connected.' : 'Not connected — live sync needs the Chrome extension (see README).');
+      : (canSync
+        ? 'Not connected.'
+        : 'Not connected — opened from disk, so live sync is unavailable. Load as a Chrome extension, or open the deployed site.');
 
     const lsCount = state.deadlines.filter((d) => d.source === 'learningSuite').length;
     $('ls-status').textContent = lsCount
@@ -258,7 +269,7 @@
     }
     state.banners = [];
     try {
-      const client = CDT.createClient(settings.canvasHost, settings.canvasToken);
+      const client = canvasClient(settings.canvasHost, settings.canvasToken);
       const items = await client.fetchDeadlines();
       const merged = store.merge(state.deadlines, items, 'canvas');
       state.deadlines = merged.deadlines;
@@ -338,7 +349,7 @@
     if (!token) { banner('error', 'No token', 'Paste a Canvas access token first.'); return; }
     try {
       // Verify before storing, so a typo fails now rather than silently later.
-      const name = await CDT.createClient(host, token).verifyToken();
+      const name = await canvasClient(host, token).verifyToken();
       state.settings.canvasHost = host;
       state.settings.canvasToken = token;
       state.settings.canvasName = name;
@@ -385,10 +396,11 @@
     render();
   });
 
-  if (!isExtension && state.settings.canvasToken) {
+  if (!canSync && state.settings.canvasToken) {
     banner('error', 'Live sync unavailable here',
-      'Canvas refuses direct calls from web pages. Load this folder as a Chrome extension to sync; ' +
-      'cached deadlines and Learning Suite import still work.');
+      'Canvas refuses direct calls from web pages, and this page was opened from disk rather than served. ' +
+      'Load this folder as a Chrome extension, or open the deployed site; cached deadlines and ' +
+      'Learning Suite import still work either way.');
   }
 
   render();

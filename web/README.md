@@ -35,16 +35,21 @@ request before Canvas ever sees it.
 
 So the app runs in **two modes**, and which one you get depends on how you open it.
 
-| | Plain web page | Chrome extension |
-|---|---|---|
-| View cached deadlines | ✅ | ✅ |
-| List + calendar + completion | ✅ | ✅ |
-| Import Learning Suite by pasting | ✅ | ✅ |
-| **Live Canvas sync** | ❌ blocked by CORS | ✅ |
+| | Opened from disk | Deployed (Vercel) | Chrome extension |
+|---|---|---|---|
+| View cached deadlines | ✅ | ✅ | ✅ |
+| List + calendar + completion | ✅ | ✅ | ✅ |
+| Import Learning Suite by pasting | ✅ | ✅ | ✅ |
+| **Live Canvas sync** | ❌ blocked by CORS | ✅ via the proxy function | ✅ direct |
 
-Loading it as an extension is the only way to get live sync, because
-`host_permissions` exempts an extension's own pages from CORS. It takes about
-thirty seconds to set up.
+Two ways to get live sync. An **extension** page has `host_permissions`, which
+exempts it from CORS, so it calls Canvas directly. A **deployment** includes
+`api/canvas.js`, a serverless function that makes the call server-side, where
+CORS does not apply — the page talks to your own domain, and your domain talks
+to Canvas.
+
+The difference matters for where your token goes. See
+[Security](#security-where-your-token-goes) below.
 
 ---
 
@@ -59,10 +64,45 @@ Then in **Settings**, paste a Canvas access token (Canvas → Account → Settin
 **+ New Access Token**; Canvas shows it once) and press **Connect Canvas**. The
 token is verified before it is saved, so a typo fails immediately.
 
+## Deploying to Vercel
+
+The repo is ready to deploy; the only setting that matters is the root directory.
+
+**From the dashboard** (easiest, and it redeploys on every push):
+
+1. [vercel.com/new](https://vercel.com/new) → import `tmiskin33/CougarTracker`
+2. Set **Root Directory** to `web`
+3. Framework preset: **Other**. No build command, no install step.
+4. Deploy
+
+**From the CLI:**
+
+```bash
+npm i -g vercel
+cd web
+vercel          # preview deployment
+vercel --prod   # production
+```
+
+Either way you get a URL that works in any browser, on your phone included, with
+live Canvas sync through the proxy function.
+
+`vercel.json` sets `X-Content-Type-Options`, `Referrer-Policy: no-referrer`, and
+`X-Frame-Options: DENY`. The proxy deliberately sends **no**
+`Access-Control-Allow-Origin`, so only pages from your own deployment can use it
+— otherwise you would be hosting an open Canvas relay for anyone who found the
+URL.
+
+**Your deployment is public by default.** The code is; your data is not — every
+deadline and your token live in your browser's local storage, not on the server.
+The function keeps nothing. But anyone with the URL can open the app (they would
+see an empty one and need their own Canvas token). If that bothers you, Vercel's
+Deployment Protection can put the whole thing behind your Vercel login.
+
 ## Running it as a plain page
 
-Open `index.html` in Chrome, or serve the folder over HTTP, or push it to GitHub
-Pages. Everything works except live Canvas sync, which the browser will block.
+Open `index.html` in Chrome, or serve the folder over HTTP. Everything works
+except live Canvas sync — from `file://` there is no proxy to route through.
 
 ---
 
@@ -83,9 +123,22 @@ the same markup the iOS app's parser needs, and retargeting one retargets both.
 
 ---
 
-## Security: the token is less protected here than on the phone
+## Security: where your token goes
 
-Say this plainly, because the two are not equivalent.
+Say this plainly, because the three modes are not equivalent.
+
+| | Token stored | Token transmitted to |
+|---|---|---|
+| iOS app | iOS keychain, encrypted, device only | Canvas only |
+| Chrome extension | extension `localStorage`, unencrypted | Canvas only |
+| Vercel deployment | browser `localStorage`, unencrypted | your Vercel function, then Canvas |
+
+The deployment adds a hop. `api/canvas.js` forwards your `Authorization` header
+to Canvas and returns the reply; it never logs, stores, or writes the token
+anywhere, and the code is right there to check. But the token does pass through
+a server you are renting, in memory, on every sync. **The extension does not
+have this property** — if that hop bothers you, use the extension and skip the
+deployment.
 
 The iOS app keeps your Canvas token in the **iOS keychain** — encrypted, device
 only, never in a backup. In a browser there is no keychain. The token goes in
@@ -119,6 +172,8 @@ js/store.js         merge rules, grouping, localStorage
 js/app.js           rendering and wiring
 js/sw.js            opens the app in a tab when the toolbar icon is clicked
 manifest.json       Chrome extension (MV3)
+api/canvas.js       Vercel function: the server-side Canvas proxy
+vercel.json         security headers
 test/               node --test, no dependencies
 ```
 
@@ -132,7 +187,7 @@ finally arrives, one fixture update tests both.
 ## Tests
 
 ```
-node --test web/test/parsing.test.js web/test/store.test.js
+node --test web/test/parsing.test.js web/test/store.test.js web/test/proxy.test.js
 ```
 
 No dependencies and no network. Covers the HTML parser, every written date form,
